@@ -5,246 +5,89 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Wealth Plan Dashboard</title>
 <style>
-  :root {
-    --bg: #F7F6F2;
-    --surface: #FFFFFF;
-    --surface-2: #F0EEE8;
-    --text-primary: #1A1A18;
-    --text-secondary: #5F5E5A;
-    --text-muted: #898781;
-    --border: #E1E0D9;
-    --blue: #2a78d6;
-    --green: #1baf7a;
-    --amber: #eda100;
-  }
   * { box-sizing: border-box; }
   body {
-    margin: 0;
+    margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif;
-    background: var(--bg);
-    color: var(--text-primary);
-    padding: 2rem 1.5rem 4rem;
+    background: #F7F6F2; color: #1A1A18;
   }
-  .wrap { max-width: 760px; margin: 0 auto; }
-  h1 { font-size: 22px; font-weight: 600; margin: 0 0 4px; }
-  .subtitle { font-size: 14px; color: var(--text-secondary); margin: 0 0 2rem; }
-  .cards {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-    gap: 12px;
-    margin-bottom: 1.5rem;
+  .gate {
+    background: #FFFFFF; border: 1px solid #E1E0D9; border-radius: 12px;
+    padding: 2rem; width: 100%; max-width: 340px; text-align: center;
   }
-  .card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 1rem;
+  .gate h1 { font-size: 18px; font-weight: 600; margin: 0 0 1.25rem; }
+  .gate input {
+    width: 100%; padding: 10px 12px; font-size: 15px; border: 1px solid #E1E0D9;
+    border-radius: 8px; margin-bottom: 12px; outline: none;
   }
-  .card p.label { font-size: 13px; color: var(--text-secondary); margin: 0 0 4px; }
-  .card p.value { font-size: 24px; font-weight: 600; margin: 0; }
-  .panel {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 1.25rem;
-    margin-bottom: 1.5rem;
+  .gate input:focus { border-color: #2a78d6; }
+  .gate button {
+    width: 100%; padding: 10px 12px; font-size: 15px; font-weight: 600; color: white;
+    background: #2a78d6; border: none; border-radius: 8px; cursor: pointer;
   }
-  .slider-row { margin-bottom: 1.25rem; }
-  .slider-row:last-child { margin-bottom: 0; }
-  .slider-label {
-    display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 6px;
-  }
-  .slider-label span.out { font-weight: 600; }
-  input[type=range] {
-    width: 100%; height: 4px; -webkit-appearance: none; appearance: none;
-    background: var(--surface-2); border-radius: 2px; outline: none;
-  }
-  input[type=range]::-webkit-slider-thumb {
-    -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%;
-    background: var(--blue); cursor: pointer; border: 2px solid white; box-shadow: 0 0 0 1px var(--border);
-  }
-  input[type=range]::-moz-range-thumb {
-    width: 18px; height: 18px; border-radius: 50%; background: var(--blue);
-    cursor: pointer; border: 2px solid white; box-shadow: 0 0 0 1px var(--border);
-  }
-  .note { font-size: 12px; color: var(--text-muted); margin: 6px 0 0; }
-  .legend { display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 8px; font-size: 12px; color: var(--text-secondary); }
-  .legend span { display: flex; align-items: center; gap: 4px; }
-  .swatch { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
-  .chart-wrap { position: relative; width: 100%; height: 240px; margin-bottom: 1.5rem; }
-  footer { font-size: 12px; color: var(--text-muted); margin-top: 2rem; line-height: 1.6; }
+  .gate button:hover { background: #1f5fac; }
+  .gate p.error { color: #c0392b; font-size: 13px; margin: 10px 0 0; display: none; }
 </style>
 </head>
 <body>
-<div class="wrap">
-  <h1>Wealth plan dashboard</h1>
-  <p class="subtitle">Mortgage, super, and ETF projections — adjust the sliders to test scenarios</p>
-
-  <div class="cards">
-    <div class="card"><p class="label">Mortgage payoff</p><p class="value" id="stat-payoff">–</p></div>
-    <div class="card"><p class="label">Interest paid</p><p class="value" id="stat-interest">–</p></div>
-    <div class="card"><p class="label">Super in 20 years</p><p class="value" id="stat-super">–</p></div>
-    <div class="card"><p class="label">Combined wealth in 20yrs</p><p class="value" id="stat-total">–</p></div>
-  </div>
-
-  <div class="panel">
-    <div class="slider-row">
-      <div class="slider-label"><label for="extraMortgage">Extra monthly to mortgage offset</label><span class="out" id="extraMortgage-out">$2,000</span></div>
-      <input type="range" id="extraMortgage" min="0" max="4000" step="100" value="2000" />
-    </div>
-    <div class="slider-row">
-      <div class="slider-label"><label for="salarySacrifice">Extra super salary sacrifice (per year, combined)</label><span class="out" id="salarySacrifice-out">$10,000</span></div>
-      <input type="range" id="salarySacrifice" min="0" max="30000" step="500" value="10000" />
-      <p class="note" id="cap-note"></p>
-    </div>
-    <div class="slider-row">
-      <div class="slider-label"><label for="etfMonthly">Extra monthly into ETFs</label><span class="out" id="etfMonthly-out">$500</span></div>
-      <input type="range" id="etfMonthly" min="0" max="3000" step="100" value="500" />
-    </div>
-  </div>
-
-  <div class="legend"><span><span class="swatch" style="background:#2a78d6"></span>Mortgage balance</span></div>
-  <div class="chart-wrap"><canvas id="mortgageChart" role="img" aria-label="Line chart of mortgage balance declining to zero over time">Mortgage balance chart</canvas></div>
-
-  <div class="legend">
-    <span><span class="swatch" style="background:#1baf7a"></span>Super</span>
-    <span><span class="swatch" style="background:#eda100"></span>ETFs</span>
-  </div>
-  <div class="chart-wrap"><canvas id="wealthChart" role="img" aria-label="Stacked area chart of combined super and ETF balances growing over 20 years">Combined wealth chart</canvas></div>
-
-  <footer>
-    Assumptions: $390,000 mortgage, $70,000 starting offset, 5.75% mortgage rate over a 30-year term. $350,000 combined starting super balance, $260,000 combined income, 12% employer super guarantee, 7% investment return on super and ETFs, $60,000 combined concessional cap. This is an educational model with simplifying assumptions (constant returns, no inflation adjustment, no tax on distributions) — not financial advice. A financial planner or accountant can refine this to your exact position.
-  </footer>
+<div class="gate" id="gate">
+  <h1>This dashboard is private</h1>
+  <input type="password" id="pw" placeholder="Password" autofocus />
+  <button id="submit">Unlock</button>
+  <p class="error" id="err">Wrong password — try again.</p>
 </div>
-
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script>
-const fmt = n => '$' + Math.round(n).toLocaleString('en-US');
-const fmtFull = n => new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0}).format(n);
+const SALT_B64 = "j5DytyZIl+v7Hu9M3pVVMQ==";
+const IV_B64 = "G4Ey212HQjQJVzbC";
+const CT_B64 = "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";
+const ITERATIONS = 600000;
 
-const LOAN = 390000, OFFSET0 = 70000, RATE = 0.0575, TERM = 30;
-const SUPER0 = 350000, INCOME = 260000, SG_RATE = 0.12, CAP = 60000, RETURN = 0.07;
-const ETF0 = 0, ETF_RETURN = 0.07, YEARS = 20;
-
-function mortgagePayment(){
-  const mr = RATE/12, n = TERM*12;
-  return LOAN * mr / (1 - Math.pow(1+mr, -n));
+function b64ToBytes(b64) {
+  const bin = atob(b64);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return bytes;
 }
 
-function runMortgage(extra){
-  const payment = mortgagePayment(), mr = RATE/12;
-  let balance = LOAN, offset = OFFSET0, month = 0, totalInterest = 0;
-  const yearly = [{year:0, balance: LOAN}];
-  let payoffMonth = null;
-  while (balance > 0.5 && month < 360){
-    month++;
-    const interestBearing = Math.max(balance - offset, 0);
-    const interest = interestBearing * mr;
-    totalInterest += interest;
-    const principal = Math.min(payment - interest, balance);
-    balance -= principal;
-    offset += extra;
-    if (balance <= 0.5 && payoffMonth === null) payoffMonth = month;
-    if (month % 12 === 0) yearly.push({year: month/12, balance: Math.max(balance,0)});
-  }
-  if (payoffMonth === null) payoffMonth = month;
-  if (yearly[yearly.length-1].year !== Math.ceil(payoffMonth/12)){
-    yearly.push({year: Math.ceil(payoffMonth/12), balance: 0});
-  }
-  return {payoffMonth, totalInterest, yearly};
+async function tryDecrypt(password) {
+  const enc = new TextEncoder();
+  const keyMaterial = await crypto.subtle.importKey(
+    "raw", enc.encode(password), { name: "PBKDF2" }, false, ["deriveKey"]
+  );
+  const key = await crypto.subtle.deriveKey(
+    { name: "PBKDF2", salt: b64ToBytes(SALT_B64), iterations: ITERATIONS, hash: "SHA-256" },
+    keyMaterial,
+    { name: "AES-GCM", length: 256 },
+    false,
+    ["decrypt"]
+  );
+  const decrypted = await crypto.subtle.decrypt(
+    { name: "AES-GCM", iv: b64ToBytes(IV_B64) },
+    key,
+    b64ToBytes(CT_B64)
+  );
+  return new TextDecoder().decode(decrypted);
 }
 
-function runGrowth(startBalance, annualContribution, rate){
-  let balance = startBalance;
-  const yearly = [{year:0, balance: startBalance}];
-  for (let y=1; y<=YEARS; y++){
-    balance = balance*(1+rate) + annualContribution;
-    yearly.push({year: y, balance});
-  }
-  return yearly;
-}
-
-let mortgageChart, wealthChart;
-
-function render(){
-  const extraMortgage = +document.getElementById('extraMortgage').value;
-  const salarySacrifice = +document.getElementById('salarySacrifice').value;
-  const etfMonthly = +document.getElementById('etfMonthly').value;
-
-  document.getElementById('extraMortgage-out').textContent = fmt(extraMortgage);
-  document.getElementById('salarySacrifice-out').textContent = fmt(salarySacrifice);
-  document.getElementById('etfMonthly-out').textContent = fmt(etfMonthly);
-
-  const employerSG = INCOME * SG_RATE;
-  const totalSuperContrib = employerSG + salarySacrifice;
-  const headroom = CAP - totalSuperContrib;
-  const capNote = document.getElementById('cap-note');
-  if (headroom < 0){
-    capNote.textContent = 'Over the $60,000 combined concessional cap by ' + fmt(-headroom) + ' — extra contributions above the cap lose their tax advantage.';
-    capNote.style.color = '#8a6100';
-  } else {
-    capNote.textContent = fmt(headroom) + ' of cap headroom remaining (employer contributions already use ' + fmt(employerSG) + ').';
-    capNote.style.color = 'var(--text-muted)';
-  }
-
-  const m = runMortgage(extraMortgage);
-  const superYearly = runGrowth(SUPER0, totalSuperContrib, RETURN);
-  const etfYearly = runGrowth(ETF0, etfMonthly*12, ETF_RETURN);
-
-  document.getElementById('stat-payoff').textContent = (m.payoffMonth/12).toFixed(1) + ' yrs';
-  document.getElementById('stat-interest').textContent = fmt(m.totalInterest);
-  document.getElementById('stat-super').textContent = fmt(superYearly[YEARS].balance);
-  document.getElementById('stat-total').textContent = fmt(superYearly[YEARS].balance + etfYearly[YEARS].balance);
-
-  const mLabels = m.yearly.map(d => 'Yr ' + d.year);
-  const mData = m.yearly.map(d => Math.round(d.balance));
-
-  if (mortgageChart){
-    mortgageChart.data.labels = mLabels;
-    mortgageChart.data.datasets[0].data = mData;
-    mortgageChart.update();
-  } else {
-    mortgageChart = new Chart(document.getElementById('mortgageChart'), {
-      type: 'line',
-      data: { labels: mLabels, datasets: [{ data: mData, borderColor: '#2a78d6', backgroundColor: 'rgba(42,120,214,0.1)', fill: true, tension: 0.2, pointRadius: 0, borderWidth: 2 }] },
-      options: {
-        responsive: true, maintainAspectRatio: false,
-        plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => fmtFull(c.parsed.y) } } },
-        scales: { y: { ticks: { callback: v => fmt(v) }, grid: { color: '#e1e0d9' } }, x: { grid: { display: false } } }
-      }
-    });
-  }
-
-  const wLabels = superYearly.map(d => 'Yr ' + d.year);
-  const superData = superYearly.map(d => Math.round(d.balance));
-  const etfData = etfYearly.map(d => Math.round(d.balance));
-
-  if (wealthChart){
-    wealthChart.data.labels = wLabels;
-    wealthChart.data.datasets[0].data = superData;
-    wealthChart.data.datasets[1].data = etfData;
-    wealthChart.update();
-  } else {
-    wealthChart = new Chart(document.getElementById('wealthChart'), {
-      type: 'line',
-      data: { labels: wLabels, datasets: [
-        { label: 'Super', data: superData, borderColor: '#1baf7a', backgroundColor: 'rgba(27,175,122,0.15)', fill: true, tension: 0.2, pointRadius: 0, borderWidth: 2, stack: 'stack1' },
-        { label: 'ETFs', data: etfData, borderColor: '#eda100', backgroundColor: 'rgba(237,161,0,0.2)', fill: true, tension: 0.2, pointRadius: 0, borderWidth: 2, stack: 'stack1' }
-      ]},
-      options: {
-        responsive: true, maintainAspectRatio: false,
-        interaction: { mode: 'index', intersect: false },
-        plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => c.dataset.label + ': ' + fmtFull(c.parsed.y) } } },
-        scales: { y: { stacked: true, ticks: { callback: v => fmt(v) }, grid: { color: '#e1e0d9' } }, x: { stacked: true, grid: { display: false } } }
-      }
-    });
+async function attempt() {
+  const pw = document.getElementById('pw').value;
+  const err = document.getElementById('err');
+  err.style.display = 'none';
+  try {
+    const html = await tryDecrypt(pw);
+    document.open();
+    document.write(html);
+    document.close();
+  } catch (e) {
+    err.style.display = 'block';
   }
 }
 
-['extraMortgage','salarySacrifice','etfMonthly'].forEach(id => {
-  document.getElementById(id).addEventListener('input', render);
+document.getElementById('submit').addEventListener('click', attempt);
+document.getElementById('pw').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') attempt();
 });
-render();
 </script>
 </body>
 </html>
