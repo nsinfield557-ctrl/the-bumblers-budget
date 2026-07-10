@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Wealth Plan Dashboard</title>
+<style>
+  :root {
+    --bg: #F7F6F2;
+    --surface: #FFFFFF;
+    --surface-2: #F0EEE8;
+    --text-primary: #1A1A18;
+    --text-secondary: #5F5E5A;
+    --text-muted: #898781;
+    --border: #E1E0D9;
+    --blue: #2a78d6;
+    --green: #1baf7a;
+    --amber: #eda100;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif;
+    background: var(--bg);
+    color: var(--text-primary);
+    padding: 2rem 1.5rem 4rem;
+  }
+  .wrap { max-width: 760px; margin: 0 auto; }
+  h1 { font-size: 22px; font-weight: 600; margin: 0 0 4px; }
+  .subtitle { font-size: 14px; color: var(--text-secondary); margin: 0 0 2rem; }
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px;
+    margin-bottom: 1.5rem;
+  }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1rem;
+  }
+  .card p.label { font-size: 13px; color: var(--text-secondary); margin: 0 0 4px; }
+  .card p.value { font-size: 24px; font-weight: 600; margin: 0; }
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.25rem;
+    margin-bottom: 1.5rem;
+  }
+  .slider-row { margin-bottom: 1.25rem; }
+  .slider-row:last-child { margin-bottom: 0; }
+  .slider-label {
+    display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 6px;
+  }
+  .slider-label span.out { font-weight: 600; }
+  input[type=range] {
+    width: 100%; height: 4px; -webkit-appearance: none; appearance: none;
+    background: var(--surface-2); border-radius: 2px; outline: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%;
+    background: var(--blue); cursor: pointer; border: 2px solid white; box-shadow: 0 0 0 1px var(--border);
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 18px; height: 18px; border-radius: 50%; background: var(--blue);
+    cursor: pointer; border: 2px solid white; box-shadow: 0 0 0 1px var(--border);
+  }
+  .note { font-size: 12px; color: var(--text-muted); margin: 6px 0 0; }
+  .legend { display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 8px; font-size: 12px; color: var(--text-secondary); }
+  .legend span { display: flex; align-items: center; gap: 4px; }
+  .swatch { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+  .chart-wrap { position: relative; width: 100%; height: 240px; margin-bottom: 1.5rem; }
+  footer { font-size: 12px; color: var(--text-muted); margin-top: 2rem; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Wealth plan dashboard</h1>
+  <p class="subtitle">Mortgage, super, and ETF projections — adjust the sliders to test scenarios</p>
+
+  <div class="cards">
+    <div class="card"><p class="label">Mortgage payoff</p><p class="value" id="stat-payoff">–</p></div>
+    <div class="card"><p class="label">Interest paid</p><p class="value" id="stat-interest">–</p></div>
+    <div class="card"><p class="label">Super in 20 years</p><p class="value" id="stat-super">–</p></div>
+    <div class="card"><p class="label">Combined wealth in 20yrs</p><p class="value" id="stat-total">–</p></div>
+  </div>
+
+  <div class="panel">
+    <div class="slider-row">
+      <div class="slider-label"><label for="extraMortgage">Extra monthly to mortgage offset</label><span class="out" id="extraMortgage-out">$2,000</span></div>
+      <input type="range" id="extraMortgage" min="0" max="4000" step="100" value="2000" />
+    </div>
+    <div class="slider-row">
+      <div class="slider-label"><label for="salarySacrifice">Extra super salary sacrifice (per year, combined)</label><span class="out" id="salarySacrifice-out">$10,000</span></div>
+      <input type="range" id="salarySacrifice" min="0" max="30000" step="500" value="10000" />
+      <p class="note" id="cap-note"></p>
+    </div>
+    <div class="slider-row">
+      <div class="slider-label"><label for="etfMonthly">Extra monthly into ETFs</label><span class="out" id="etfMonthly-out">$500</span></div>
+      <input type="range" id="etfMonthly" min="0" max="3000" step="100" value="500" />
+    </div>
+  </div>
+
+  <div class="legend"><span><span class="swatch" style="background:#2a78d6"></span>Mortgage balance</span></div>
+  <div class="chart-wrap"><canvas id="mortgageChart" role="img" aria-label="Line chart of mortgage balance declining to zero over time">Mortgage balance chart</canvas></div>
+
+  <div class="legend">
+    <span><span class="swatch" style="background:#1baf7a"></span>Super</span>
+    <span><span class="swatch" style="background:#eda100"></span>ETFs</span>
+  </div>
+  <div class="chart-wrap"><canvas id="wealthChart" role="img" aria-label="Stacked area chart of combined super and ETF balances growing over 20 years">Combined wealth chart</canvas></div>
+
+  <footer>
+    Assumptions: $390,000 mortgage, $70,000 starting offset, 5.75% mortgage rate over a 30-year term. $350,000 combined starting super balance, $260,000 combined income, 12% employer super guarantee, 7% investment return on super and ETFs, $60,000 combined concessional cap. This is an educational model with simplifying assumptions (constant returns, no inflation adjustment, no tax on distributions) — not financial advice. A financial planner or accountant can refine this to your exact position.
+  </footer>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const fmt = n => '$' + Math.round(n).toLocaleString('en-US');
+const fmtFull = n => new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0}).format(n);
+
+const LOAN = 390000, OFFSET0 = 70000, RATE = 0.0575, TERM = 30;
+const SUPER0 = 350000, INCOME = 260000, SG_RATE = 0.12, CAP = 60000, RETURN = 0.07;
+const ETF0 = 0, ETF_RETURN = 0.07, YEARS = 20;
+
+function mortgagePayment(){
+  const mr = RATE/12, n = TERM*12;
+  return LOAN * mr / (1 - Math.pow(1+mr, -n));
+}
+
+function runMortgage(extra){
+  const payment = mortgagePayment(), mr = RATE/12;
+  let balance = LOAN, offset = OFFSET0, month = 0, totalInterest = 0;
+  const yearly = [{year:0, balance: LOAN}];
+  let payoffMonth = null;
+  while (balance > 0.5 && month < 360){
+    month++;
+    const interestBearing = Math.max(balance - offset, 0);
+    const interest = interestBearing * mr;
+    totalInterest += interest;
+    const principal = Math.min(payment - interest, balance);
+    balance -= principal;
+    offset += extra;
+    if (balance <= 0.5 && payoffMonth === null) payoffMonth = month;
+    if (month % 12 === 0) yearly.push({year: month/12, balance: Math.max(balance,0)});
+  }
+  if (payoffMonth === null) payoffMonth = month;
+  if (yearly[yearly.length-1].year !== Math.ceil(payoffMonth/12)){
+    yearly.push({year: Math.ceil(payoffMonth/12), balance: 0});
+  }
+  return {payoffMonth, totalInterest, yearly};
+}
+
+function runGrowth(startBalance, annualContribution, rate){
+  let balance = startBalance;
+  const yearly = [{year:0, balance: startBalance}];
+  for (let y=1; y<=YEARS; y++){
+    balance = balance*(1+rate) + annualContribution;
+    yearly.push({year: y, balance});
+  }
+  return yearly;
+}
+
+let mortgageChart, wealthChart;
+
+function render(){
+  const extraMortgage = +document.getElementById('extraMortgage').value;
+  const salarySacrifice = +document.getElementById('salarySacrifice').value;
+  const etfMonthly = +document.getElementById('etfMonthly').value;
+
+  document.getElementById('extraMortgage-out').textContent = fmt(extraMortgage);
+  document.getElementById('salarySacrifice-out').textContent = fmt(salarySacrifice);
+  document.getElementById('etfMonthly-out').textContent = fmt(etfMonthly);
+
+  const employerSG = INCOME * SG_RATE;
+  const totalSuperContrib = employerSG + salarySacrifice;
+  const headroom = CAP - totalSuperContrib;
+  const capNote = document.getElementById('cap-note');
+  if (headroom < 0){
+    capNote.textContent = 'Over the $60,000 combined concessional cap by ' + fmt(-headroom) + ' — extra contributions above the cap lose their tax advantage.';
+    capNote.style.color = '#8a6100';
+  } else {
+    capNote.textContent = fmt(headroom) + ' of cap headroom remaining (employer contributions already use ' + fmt(employerSG) + ').';
+    capNote.style.color = 'var(--text-muted)';
+  }
+
+  const m = runMortgage(extraMortgage);
+  const superYearly = runGrowth(SUPER0, totalSuperContrib, RETURN);
+  const etfYearly = runGrowth(ETF0, etfMonthly*12, ETF_RETURN);
+
+  document.getElementById('stat-payoff').textContent = (m.payoffMonth/12).toFixed(1) + ' yrs';
+  document.getElementById('stat-interest').textContent = fmt(m.totalInterest);
+  document.getElementById('stat-super').textContent = fmt(superYearly[YEARS].balance);
+  document.getElementById('stat-total').textContent = fmt(superYearly[YEARS].balance + etfYearly[YEARS].balance);
+
+  const mLabels = m.yearly.map(d => 'Yr ' + d.year);
+  const mData = m.yearly.map(d => Math.round(d.balance));
+
+  if (mortgageChart){
+    mortgageChart.data.labels = mLabels;
+    mortgageChart.data.datasets[0].data = mData;
+    mortgageChart.update();
+  } else {
+    mortgageChart = new Chart(document.getElementById('mortgageChart'), {
+      type: 'line',
+      data: { labels: mLabels, datasets: [{ data: mData, borderColor: '#2a78d6', backgroundColor: 'rgba(42,120,214,0.1)', fill: true, tension: 0.2, pointRadius: 0, borderWidth: 2 }] },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => fmtFull(c.parsed.y) } } },
+        scales: { y: { ticks: { callback: v => fmt(v) }, grid: { color: '#e1e0d9' } }, x: { grid: { display: false } } }
+      }
+    });
+  }
+
+  const wLabels = superYearly.map(d => 'Yr ' + d.year);
+  const superData = superYearly.map(d => Math.round(d.balance));
+  const etfData = etfYearly.map(d => Math.round(d.balance));
+
+  if (wealthChart){
+    wealthChart.data.labels = wLabels;
+    wealthChart.data.datasets[0].data = superData;
+    wealthChart.data.datasets[1].data = etfData;
+    wealthChart.update();
+  } else {
+    wealthChart = new Chart(document.getElementById('wealthChart'), {
+      type: 'line',
+      data: { labels: wLabels, datasets: [
+        { label: 'Super', data: superData, borderColor: '#1baf7a', backgroundColor: 'rgba(27,175,122,0.15)', fill: true, tension: 0.2, pointRadius: 0, borderWidth: 2, stack: 'stack1' },
+        { label: 'ETFs', data: etfData, borderColor: '#eda100', backgroundColor: 'rgba(237,161,0,0.2)', fill: true, tension: 0.2, pointRadius: 0, borderWidth: 2, stack: 'stack1' }
+      ]},
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => c.dataset.label + ': ' + fmtFull(c.parsed.y) } } },
+        scales: { y: { stacked: true, ticks: { callback: v => fmt(v) }, grid: { color: '#e1e0d9' } }, x: { stacked: true, grid: { display: false } } }
+      }
+    });
+  }
+}
+
+['extraMortgage','salarySacrifice','etfMonthly'].forEach(id => {
+  document.getElementById(id).addEventListener('input', render);
+});
+render();
+</script>
+</body>
+</html>
